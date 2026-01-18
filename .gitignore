@@ -1,0 +1,33 @@
+# --- System ---
+.DS_Store
+Thumbs.db
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+
+# --- Environment Variables (Secrets) ---
+.env
+.env.local
+
+# --- IDE Settings ---
+.vscode/
+.idea/
+
+# --- Project Specific (Temp files) ---
+# ไฟล์ HTML ที่เราดูดมาเทส ไม่ต้องเอาขึ้น
+booking_full_source.html
+booking_debug.html
+booking_debug_requests.html
+*.log
+
+# --- Playwright ---
+test-results/
+playwright-report/
+blob-report/
+
+scripts/
