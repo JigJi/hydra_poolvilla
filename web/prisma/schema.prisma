@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Villa {
+  id          Int      @id @default(autoincrement())
+  externalId  String   @unique
+  title       String
+  slug        String   @unique
+  province    String
+  district    String
+  subDistrict String?
+  address     String?
+  latitude    Float?
+  longitude   Float?
+  priceDaily  Int
+  currency    String   @default("THB")
+  maxGuests   Int
+  bedrooms    Int
+  bathrooms   Int
+  description String?  @db.Text
+  coverImage  String?
+  images      Json     @default("[]")
+  amenities   Json     @default("{}")
+  
+  // SEO & AI Content
+  metaTitle   String?
+  metaDesc    String?
+  aiSummary   String?  @db.Text // เพิ่มไว้ให้ Bot หยอดบทความที่ Gen แล้ว
+  tags        String[]
+  
+  sourceUrl   String?
+  affiliateUrl String? // เพิ่มไว้หยอดลิงก์ทำเงิน
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // เชื่อมกับ Scoop (Relationship)
+  scoops      Scoop[]
+
+  @@index([province, district])
+  @@index([priceDaily])
+  @@index([maxGuests])
+  @@index([slug])
+}
+
+model Scoop {
+  id          Int      @id @default(autoincrement())
+  title       String   // เช่น "10 พูลวิลล่าหัวหินปี 2026"
+  slug        String   @unique // URL เช่น 'top-10-huahin-2026'
+  description String?  @db.Text // คำเกริ่นนำบทความ
+  coverImage  String?  // รูปปกของ Scoop
+  
+  type        String   @default("manual") // "manual" หรือ "auto"
+  rule        String?  // เช่น "tag:beachfront"
+  
+  villas      Villa[]  // เชื่อมกลับไปที่ Villa
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+}
