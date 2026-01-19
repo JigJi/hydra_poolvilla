@@ -311,6 +311,53 @@ class BookingParser:
         return nearby_places
 
     @staticmethod
+    def _parse_reviews_logic(soup):
+        print("   ⭐ Scanning Reviews (Direct Array)...")
+        
+        # Init ค่า Default
+        result = {
+            "rating": 0.0,
+            "reviewCount": 0,
+            "categories": [] 
+        }
+
+        # 1. Total Score & Count
+        score_comp = soup.select_one('[data-testid="review-score-component"]')
+        if score_comp:
+            # Rating
+            score_val_el = score_comp.select_one('div[aria-hidden="true"]')
+            if score_val_el:
+                try:
+                    result['rating'] = float(score_val_el.get_text().strip())
+                except: pass
+            
+            # Review Count
+            count_text = score_comp.get_text()
+            match = re.search(r'(\d+)\s*(?:reviews|ความคิดเห็น)', count_text, re.IGNORECASE)
+            if match:
+                result['reviewCount'] = int(match.group(1))
+
+        # 2. Categories (Loop เก็บลง List)
+        subscores = soup.select('[data-testid="review-subscore"]')
+        for row in subscores:
+            name_el = row.select_one('.d96a4619c0, span:first-child') or row.select_one('div:first-child')
+            val_el = row.select_one('[aria-hidden="true"]')
+            
+            if name_el and val_el:
+                key = ScraperUtils.clean_text(name_el.get_text())
+                try:
+                    val = float(ScraperUtils.clean_text(val_el.get_text()))
+                    
+                    result['categories'].append({
+                        "category": key,
+                        "rating": val
+                    })
+                except:
+                    continue
+
+        return result
+    
+    @staticmethod
     def parse_main_page(html):
         """Main entry point"""
         soup = BeautifulSoup(html, "html.parser")
@@ -323,7 +370,10 @@ class BookingParser:
             "features": {},   
             "facilities": {}, 
             "policies": {},
-            "nearbyPlaces": [] # เพิ่ม Key สำหรับสถานที่ใกล้เคียง
+            "nearbyPlaces": [],
+            "rating": 0.0,
+            "reviewCount": 0,
+            "reviewData": []
         }
 
         # --- ⚡ CALL ALL SUB-PARSERS ---
@@ -368,6 +418,12 @@ class BookingParser:
                 lat, lng = map_link.get('data-atlas-latlng').split(',')
                 data['latitude'], data['longitude'] = float(lat), float(lng)
             except: pass
+
+        # Reviews
+        reviews = BookingParser._parse_reviews_logic(soup)
+        data['rating'] = reviews['rating']
+        data['reviewCount'] = reviews['reviewCount']
+        data['reviewData'] = reviews['categories']
             
         return data
 
@@ -432,12 +488,13 @@ async def process_villa(sem, context, villa):
                     latitude=data.get('latitude'),
                     longitude=data.get('longitude'),
                     images=data.get('images'),
-                    
                     features=data.get('features'),   
                     facilities=data.get('facilities'), 
                     policies=data.get('policies'),
-                    nearbyPlaces=data.get('nearbyPlaces'), # ✅ บันทึกลง DB
-
+                    nearbyPlaces=data.get('nearbyPlaces'), 
+                    rating=data.get('rating'),
+                    reviewCount=data.get('reviewCount'),
+                    reviewData=data.get('reviewData'),
                     priceDaily=data.get('priceDaily') or room_price or Villa.priceDaily,
                     bedrooms=data.get('bedrooms') or room_specs.get('bedrooms') or Villa.bedrooms,
                     bathrooms=data.get('bathrooms') or room_specs.get('bathrooms') or Villa.bathrooms,
@@ -469,7 +526,7 @@ async def run_enricher():
         while True:
             async with AsyncSessionLocal() as session:
                 stmt = select(Villa).where(
-                    (Villa.facilities == {}) | (Villa.facilities == None)
+                    (Villa.reviewData == {}) | (Villa.reviewData == None)
                 ).limit(10)
                 # stmt = select(Villa).where(
                 #     (Villa.facilities == {}) | (Villa.facilities == None)
