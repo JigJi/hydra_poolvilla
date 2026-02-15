@@ -65,7 +65,7 @@ export default async function VillaDetailPage({ params }: { params: Promise<{ sl
 
     // 1. ดึงข้อมูลวิลล่าจาก DB
     const villa = await prisma.villa.findUnique({
-        where: { slug: params.slug },
+        where: { slug: slug },
     });
 
     // ✅ FIX 1: ดึง facilities ออกมาจาก villa และกันค่า Null (Fallback)
