@@ -276,7 +276,7 @@ export default async function ScoopMagazinePage({ params }: { params: Promise<{ 
                                                 <MapPin size={12} className="text-red-400" />
                                                 {villa.district}, {villa.province}
                                             </div>
-                                            {villa.rating > 0 && (
+                                            {(villa.rating ?? 0) > 0 && (
                                                 <div className="flex items-center gap-1.5">
                                                     <Star size={14} className="fill-yellow-400 text-yellow-400" />
                                                     <span className="text-sm font-black text-slate-800">
