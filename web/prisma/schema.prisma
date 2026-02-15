@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -15,61 +9,103 @@ datasource db {
 }
 
 model Villa {
-  id          Int      @id @default(autoincrement())
-  externalId  String   @unique
-  title       String
-  slug        String   @unique
-  province    String
-  district    String
-  subDistrict String?
-  address     String?
-  latitude    Float?
-  longitude   Float?
-  priceDaily  Int
-  currency    String   @default("THB")
-  maxGuests   Int
-  bedrooms    Int
-  bathrooms   Int
-  description String?  @db.Text
-  coverImage  String?
-  images      Json     @default("[]")
-  amenities   Json     @default("{}")
-  
-  // SEO & AI Content
-  metaTitle   String?
-  metaDesc    String?
-  aiSummary   String?  @db.Text // เพิ่มไว้ให้ Bot หยอดบทความที่ Gen แล้ว
-  tags        String[]
-  
-  sourceUrl   String?
-  affiliateUrl String? // เพิ่มไว้หยอดลิงก์ทำเงิน
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // เชื่อมกับ Scoop (Relationship)
-  scoops      Scoop[]
+  id                Int      @id @default(autoincrement())
+  externalId        String   @unique
+  slug              String   @unique
+  title             String
+  province          String
+  district          String
+  subDistrict       String?
+  address           String?
+  latitude          Float?
+  longitude         Float?
+  priceDaily        Int
+  currency          String   @default("THB")
+  maxGuests         Int
+  bedrooms          Int
+  bathrooms         Int
+  description       String?
+  content_listing   String?
+  content_detail    String?
+  coverImage        String?
+  images            Json     @default("[]")
+  sourceUrl         String?
+  affiliateUrl      String?
+  metaTitle         String?
+  metaDesc          String?
+  tags              String[]
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  amenities         Json     @default("{}")
+  facilities        Json     @default("{}")
+  features          Json     @default("{}")
+  nearbyPlaces      Json     @default("[]")
+  policies          Json     @default("{}")
+  rating            Float?   @default(0)
+  reviewCount       Int?     @default(0)
+  reviewData        Json     @default("{}")
+  original_district String?
+  original_province String?
+  hostInfo          String?
+  locationHierarchy Json     @default("[]")
+  priceNote         String?
+  facility_tags     Json?    @default("[]")
+  price_per_person  Int?
+  scoops            Scoop[]  @relation("ScoopToVilla")
 
   @@index([province, district])
   @@index([priceDaily])
   @@index([maxGuests])
   @@index([slug])
+  @@index([facility_tags], map: "idx_villa_facility_tags", type: Gin)
+  @@map("Villa")
 }
 
 model Scoop {
-  id          Int      @id @default(autoincrement())
-  title       String   // เช่น "10 พูลวิลล่าหัวหินปี 2026"
-  slug        String   @unique // URL เช่น 'top-10-huahin-2026'
-  description String?  @db.Text // คำเกริ่นนำบทความ
-  coverImage  String?  // รูปปกของ Scoop
+  id          Int       @id @default(autoincrement())
+  title       String
+  slug        String    @unique
+  description String?
+  coverImage  String?
   
-  type        String   @default("manual") // "manual" หรือ "auto"
-  rule        String?  // เช่น "tag:beachfront"
+  // Maps to scoop_type in Python
+  type        String    @default("listicle") 
   
-  villas      Villa[]  // เชื่อมกลับไปที่ Villa
+  // Maps to rule (JSONB) in Python
+  rule        Json?     @default("{}") 
+
+  // --- New SEO & System Fields (From models.py) ---
+  metaTitle       String?
+  metaDescription String?
   
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  status          String    @default("published")
+  isFeatured      Boolean   @default(false)
+  authorName      String?
+  viewCount       Int       @default(0)
+  
+  publishedAt     DateTime?
+  faqSchema       Json?     @default("[]")
+
+  // --- Timestamps ---
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // --- Relations ---
+  villas      Villa[]   @relation("ScoopToVilla")
 
   @@index([slug])
+}
+
+model StockImage {
+  id          String   @id @default(uuid())
+  url         String   @unique
+  width       Int?
+  height      Int?
+  orientation String   @default("landscape") // ค่า default คือแนวนอน
+  tags        String[] // เก็บ Tag เป็น Array เช่น ["beach", "pattaya"]
+  creditUser  String?  // เผื่อเก็บเครดิตช่างภาพ
+  source      String   @default("unsplash")
+  isUsed      Boolean  @default(false)       // ใช้เช็คว่ารูปนี้ถูกหยิบไปใช้หรือยัง
+  createdAt   DateTime @default(now())
 }

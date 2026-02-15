@@ -1,3 +1,4 @@
+# scraper/models.py
 import os
 from sqlalchemy import Column, Integer, String, Text, Float, Boolean, DateTime, ARRAY
 from sqlalchemy.dialects.postgresql import JSONB
@@ -36,7 +37,8 @@ class Villa(Base):
     # --- Content (Rich Data) ---
     description = Column(Text, nullable=True)
     hostInfo = Column(Text, nullable=True)
-    aiSummary = Column(Text, nullable=True) # เอาไว้ Gen ใหม่ทีหลัง
+    content_listing = Column(Text, nullable=True)
+    content_detail = Column(Text, nullable=True)
 
     # --- Visuals ---
     coverImage = Column(String, nullable=True)
@@ -64,3 +66,44 @@ class Villa(Base):
     # --- Timestamps ---
     createdAt = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updatedAt = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class Scoop(Base):
+    # ชื่อ Table ต้องตรงกับในรูป (Postgres อาจมองเป็น scoop หรือ "Scoop" แล้วแต่ setup)
+    # ถ้าสร้างผ่าน Prisma มักจะเป็น "Scoop"
+    __tablename__ = "Scoop" 
+    __table_args__ = {"schema": "public"}
+
+    # --- Identity ---
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(String, nullable=False)
+    slug = Column(String, unique=True, nullable=False)
+    
+    # --- Content ---
+    description = Column(Text, nullable=True) # ใน DB คุณใช้ description
+    
+    # ⚠️ Mapping: Python (cover_image) -> DB (coverImage)
+    cover_image = Column("coverImage", String, nullable=True) 
+    
+    scoop_type = Column("type", String, default="listicle") # เลี่ยงคำสงวน python 'type'
+    
+    # ⚠️ JSONB Column
+    rule = Column(JSONB, default={}, nullable=True) # เอาไว้เก็บ logic หรือ query filter
+    
+    # --- SEO (CamelCase Mapping) ---
+    meta_title = Column("metaTitle", String, nullable=True)
+    meta_description = Column("metaDescription", String, nullable=True)
+    
+    # --- System Status ---
+    status = Column(String, default="published") # published/draft
+    is_featured = Column("isFeatured", Boolean, default=False)
+    author_name = Column("authorName", String, nullable=True)
+    view_count = Column("viewCount", Integer, default=0)
+    
+    # --- Timestamps ---
+    # ใช้ timezone=True เพราะในรูปเป็น timestamptz
+    published_at = Column("publishedAt", DateTime(timezone=True), nullable=True)
+    created_at = Column("createdAt", DateTime(timezone=True), server_default=func.now())
+    updated_at = Column("updatedAt", DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    faq_schema = Column("faqSchema", JSONB, default=[], nullable=True)
