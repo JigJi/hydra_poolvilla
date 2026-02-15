@@ -20,8 +20,11 @@ import RelatedVillas from '@/components/villa/RelatedVillas';
 
 
 // SEO Metadata: ดึงชื่อวิลล่ามาทำ Title อัตโนมัติ
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-    const villa = await prisma.villa.findUnique({ where: { slug: params.slug } });
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+    // ต้อง await params ก่อนเรียกใช้ slug ครับ
+    const { slug } = await params;
+    const villa = await prisma.villa.findUnique({ where: { slug } });
+
     if (!villa) return { title: 'Villa Not Found' };
     return {
         title: `${villa.title} | PoolVillaFinder`,
@@ -55,7 +58,11 @@ export async function generateStaticParams() {
     }));
 }
 
-export default async function VillaDetailPage({ params }: { params: { slug: string } }) {
+export default async function VillaDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+
+    // ต้อง await params ก่อนเริ่มดึงข้อมูลจาก DB ครับ
+    const { slug } = await params;
+
     // 1. ดึงข้อมูลวิลล่าจาก DB
     const villa = await prisma.villa.findUnique({
         where: { slug: params.slug },
