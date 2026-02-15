@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'; // สำคัญ! ต้องมีบรรทัดนี้เพราะมีการใช้ useState
 
 import { useState, useEffect, useCallback } from 'react';

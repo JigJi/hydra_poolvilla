@@ -1,17 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/villa/[slug]/page.tsx
 import React from 'react';
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from 'next/link';
-import Image from "next/image";
 import {
-    MapPin, Users, Bed, BedDouble, Bath, Wifi, CheckCircle,
-    ChevronLeft, Share, Heart, Star, ArrowUpRight,
-    X, ChevronRight
+    MapPin, Users, Bed, Bath, Star, ArrowUpRight,
+    ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import * as LucideIcons from 'lucide-react';
 import VillaFacilities from "@/components/villa/VillaFacilities";
@@ -36,10 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 // Define Type ให้ตรงกับที่ Component ต้องการ (หรือ import มา)
-interface FacilityData {
-    popular: string[];
-    categories: { name: string; items: string[] }[];
-}
+
 
 
 // เพิ่ม ISR Strategy: Render หน้าใหม่ทุกๆ 1 ชั่วโมง (หรือตามความเหมาะสม)
@@ -86,49 +80,13 @@ export default async function VillaDetailPage({ params }: { params: Promise<{ sl
     // 2. แปลงข้อมูล (Casting)
     const images = (villa.images as string[]) || [];
 
-    type VillaAmenities = {
-        wifi?: boolean;
-        pool?: boolean;
-        kitchen?: boolean;
-        karaoke?: boolean;
-        grill?: boolean;
-    };
-    const amenities = (villa.amenities as VillaAmenities) || {};
+
 
     // แปลงราคาให้ดูสวย (มีลูกเล่นลดราคาหลอกๆ เพื่อความน่าสนใจ)
     const fakeOriginalPrice = Math.round(villa.priceDaily * 1.3);
 
     // สร้าง Schema.org สำหรับ Google
-    const jsonLd = {
-        '@context': 'https://schema.org',
-        '@type': 'VacationRental',
-        name: villa.title,
-        description: villa.content_detail,
-        image: images,
-        address: {
-            '@type': 'PostalAddress',
-            addressLocality: villa.district,
-            addressRegion: villa.province,
-            addressCountry: 'TH'
-        },
-        numberOfRooms: villa.bedrooms,
-        occupancy: {
-            '@type': 'QuantitativeValue',
-            value: villa.maxGuests,
-            unitCode: 'C62' // Person
-        },
-        offers: {
-            '@type': 'Offer',
-            price: villa.priceDaily,
-            priceCurrency: 'THB',
-            availability: 'https://schema.org/InStock',
-        },
-        "amenityFeature": facilities.popular?.map((item: string) => ({
-            "@type": "LocationFeatureSpecification",
-            "name": item,
-            "value": true
-        })) || [], // กันพังอีกชั้นถ้า popular เป็น undefined
-    }
+
 
     // คำนวณราคาต่อหัว (เพิ่มบรรทัดนี้ไว้ก่อน return)
     const perPerson = Math.round(villa.priceDaily / (villa.maxGuests || 1));
@@ -158,7 +116,7 @@ export default async function VillaDetailPage({ params }: { params: Promise<{ sl
             // ถ้าบ้านหลักรับสัตว์เลี้ยง ให้บังคับเลยว่าบ้านแนะนำต้องรับด้วย (Strict Rule)
             ...(isPetFriendly ? {
                 facility_tags: {
-                    has: 'pet_friendly' // หรือ tag ที่คุณใช้จริงใน DB
+                    array_contains: 'pet_friendly'
                 }
             } : {})
         },
@@ -224,10 +182,10 @@ export default async function VillaDetailPage({ params }: { params: Promise<{ sl
                         <div className="flex flex-col gap-4">
                             <div className="flex flex-wrap items-center gap-3">
                                 <h1 className="text-2xl md:text-4xl font-black text-slate-900 leading-tight">{villa.title}</h1>
-                                {villa.rating > 0 && (
+                                {(villa.rating ?? 0) > 0 && (
                                     <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md text-base font-bold text-slate-600 border border-slate-100">
                                         <Star size={16} className="text-orange-400 fill-orange-400" />
-                                        {villa.rating} ({villa.reviewCount})
+                                        {villa.rating ?? 0} ({villa.reviewCount ?? 0})
                                     </div>
                                 )}
                             </div>
@@ -653,7 +611,7 @@ export default async function VillaDetailPage({ params }: { params: Promise<{ sl
 
                                     // 1.3 เผื่อกรณีเป็น Array ธรรมดา (Flat list)
                                     if (Array.isArray(villa.facilities)) {
-                                        allFacilities = [...allFacilities, ...villa.facilities];
+                                        allFacilities = [...allFacilities, ...(villa.facilities as string[])];
                                     }
 
                                     // Helper ค้นหา Keyword (ค้นหาจาก list ที่รวมมาแล้ว)
@@ -756,7 +714,7 @@ export default async function VillaDetailPage({ params }: { params: Promise<{ sl
                     <div className="border-t border-slate-100 my-16"></div>
 
                     {/* --- SECTION: RELATED VILLAS (Slider Version) --- */}
-                    <RelatedVillas villas={relatedVillas} currentLocation={villa.location} />
+                    <RelatedVillas villas={relatedVillas} currentLocation={villa.province} />
 
                     {/* Margin Bottom ปิดท้ายหน้า */}
                     <div className="mb-24"></div>

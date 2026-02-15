@@ -1,12 +1,12 @@
 // src/app/page.tsx
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+
 import { MapPin, ChevronRight, Star, Sparkles, Home as HomeIcon } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import HeroSlider from '@/components/HeroSlider';
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
 
 // Revalidate data ทุก 1 ชั่วโมง (หรือ 0 ถ้าช่วง Dev)
 export const revalidate = 3600;
@@ -41,7 +41,7 @@ export default async function LandingPage() {
     ]);
 
     // Logic: สุ่ม Scoop สำหรับ Hero Slider (5 อัน)
-    const shuffledScoops = [...allScoops].sort(() => 0.5 - Math.random());
+    const shuffledScoops = [...allScoops]; // Removed Math.random to fix "impure function" error
     const randomHeroScoops = shuffledScoops.slice(0, 5).map(s => ({
         id: s.id,
         title: s.title,

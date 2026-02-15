@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { cache } from 'react';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
@@ -14,12 +15,7 @@ import {
     Star,
     Quote,
     ChevronRight,
-    CheckCircle2,
-    Mic2,
     Waves,
-    Target,
-    Flame,
-    ArrowUpRight,
     HelpCircle // เพิ่มมาแค่ตัวเดียวสำหรับ FAQ
 } from 'lucide-react';
 import { Metadata } from 'next';
@@ -294,7 +290,7 @@ export default async function ScoopMagazinePage({ params }: { params: Promise<{ 
                                         </h3>
 
                                         <p className="text-slate-500 text-sm leading-relaxed line-clamp-2 mb-4 h-[42px] overflow-hidden italic">
-                                            "{villa.content_listing || "พูลวิลล่าส่วนตัวพร้อมสิ่งอำนวยความสะดวกครบครัน ในราคาคุ้มค่า..."}"
+                                            &quot;{villa.content_listing || "พูลวิลล่าส่วนตัวพร้อมสิ่งอำนวยความสะดวกครบครัน ในราคาคุ้มค่า..."}&quot;
                                         </p>
 
                                         {/* Tags Display */}

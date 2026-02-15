@@ -1,5 +1,5 @@
 import {
-    Wifi, Car, Utensils, BedDouble, Wind, Lock, Tv, Waves,
+    Wifi, Car, Utensils, Wind, Tv, Waves,
     CheckCircle2, Mic2, Flame
 } from 'lucide-react';
 
