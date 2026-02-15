@@ -68,6 +68,8 @@ export default async function VillaDetailPage({ params }: { params: Promise<{ sl
         where: { slug: slug },
     });
 
+    if (!villa) notFound();
+
     // ✅ FIX 1: ดึง facilities ออกมาจาก villa และกันค่า Null (Fallback)
     const facilities = (villa.facilities as any) || { popular: [] };
 
@@ -79,7 +81,7 @@ export default async function VillaDetailPage({ params }: { params: Promise<{ sl
             : JSON.parse(villa.facility_tags as string || '[]');
     } catch (e) { displayTags = []; }
 
-    if (!villa) notFound();
+
 
     // 2. แปลงข้อมูล (Casting)
     const images = (villa.images as string[]) || [];
