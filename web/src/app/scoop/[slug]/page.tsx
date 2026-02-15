@@ -280,7 +280,7 @@ export default async function ScoopMagazinePage({ params }: { params: Promise<{ 
                                                 <div className="flex items-center gap-1.5">
                                                     <Star size={14} className="fill-yellow-400 text-yellow-400" />
                                                     <span className="text-sm font-black text-slate-800">
-                                                        {villa.rating.toFixed(1)}
+                                                        {(villa.rating ?? 0).toFixed(1)}
                                                     </span>
                                                     <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">
                                                         ({villa.reviewCount?.toLocaleString() || 0} รีวิว)
