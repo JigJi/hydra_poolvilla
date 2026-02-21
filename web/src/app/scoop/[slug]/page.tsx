@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import * as LucideIcons from 'lucide-react';
+import RelatedScoops from '@/components/scoop/RelatedScoops';
 
 import {
     MapPin,
@@ -111,6 +112,10 @@ export default async function ScoopMagazinePage({ params }: { params: Promise<{ 
     if (!scoop) return notFound();
 
     const queryOptions = parseRuleToPrisma(scoop.rule);
+
+    const ruleData = typeof scoop.rule === 'string' ? JSON.parse(scoop.rule) : (scoop.rule || {});
+    const currentProvince = ruleData.province || '';
+    const currentDistrict = ruleData.district || '';
 
     const villas = await prisma.villa.findMany({
         ...queryOptions,
@@ -386,6 +391,17 @@ export default async function ScoopMagazinePage({ params }: { params: Promise<{ 
                             ))}
                         </div>
                     </section>
+                )}
+
+                {/* --- 4. PSEO SECTION: RELATED SCOOPS --- */}
+                {(currentProvince || currentDistrict) && (
+                    <div className="max-w-5xl mx-auto mb-20">
+                        <RelatedScoops
+                            currentProvince={currentProvince}
+                            currentDistrict={currentDistrict}
+                            currentScoopId={scoop.id}
+                        />
+                    </div>
                 )}
 
             </main>

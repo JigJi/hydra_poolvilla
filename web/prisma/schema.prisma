@@ -53,6 +53,7 @@ model Villa {
   facility_tags     Json?    @default("[]")
   price_per_person  Int?
   scoops            Scoop[]  @relation("ScoopToVilla")
+  lastIndexedAt     DateTime?
 
   @@index([province, district])
   @@index([priceDaily])
@@ -93,6 +94,8 @@ model Scoop {
 
   // --- Relations ---
   villas      Villa[]   @relation("ScoopToVilla")
+
+  lastIndexedAt  DateTime?
 
   @@index([slug])
 }
