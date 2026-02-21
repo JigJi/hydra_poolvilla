@@ -5,21 +5,19 @@ import { prisma } from '@/lib/prisma';
 import { MapPin, Star, Search as SearchIcon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
-// บอก Next.js ว่าหน้านี้เป็น Dynamic เพราะต้องรับค่า Search Params ตลอดเวลา
 export const dynamic = 'force-dynamic';
 
-export default async function SearchPage({
-    searchParams,
-}: {
-    searchParams: { [key: string]: string | string[] | undefined };
+// ✅ แก้ไข Type ตรงนี้ให้ searchParams เป็น Promise
+export default async function SearchPage(props: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-    // 1. รับค่าที่ส่งมาจาก URL (เช่น ?province=pattaya)
-    const rawQuery = searchParams.province as string || searchParams.q as string || '';
+    // 1. 🚀 ต้อง await searchParams ก่อนใช้งาน (Next.js 15 บังคับ)
+    const searchParams = await props.searchParams;
 
-    // คลีนคำค้นหา (เปลี่ยนขีดเป็นช่องว่าง เช่น chiang-mai -> chiang mai)
+    // จากนั้นใช้ Logic เดิมของคุณได้เลยครับ
+    const rawQuery = (searchParams.province as string) || (searchParams.q as string) || '';
     const cleanQuery = rawQuery.replace(/-/g, ' ');
 
-    // 2. สร้างเงื่อนไขการค้นหา
     let whereClause = {};
     if (cleanQuery) {
         whereClause = {
@@ -31,11 +29,10 @@ export default async function SearchPage({
         };
     }
 
-    // 3. ดึงข้อมูลจาก Database
     const villas = await prisma.villa.findMany({
         where: whereClause,
         orderBy: { createdAt: 'desc' },
-        take: 40, // ดึงมาสูงสุด 40 หลังก่อน (เดี๋ยวอนาคตค่อยทำ Pagination)
+        take: 40,
         select: {
             id: true,
             title: true,
@@ -53,8 +50,6 @@ export default async function SearchPage({
     return (
         <div className="min-h-screen bg-slate-50 font-sans pb-20 pt-8">
             <main className="max-w-7xl mx-auto px-4">
-
-                {/* --- HEADER SECTION --- */}
                 <div className="mb-10">
                     <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3 mb-2">
                         <SearchIcon className="text-blue-600" size={32} />
@@ -69,7 +64,6 @@ export default async function SearchPage({
                     )}
                 </div>
 
-                {/* --- RESULTS GRID --- */}
                 {villas.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {villas.map((villa) => (
@@ -113,7 +107,6 @@ export default async function SearchPage({
                         ))}
                     </div>
                 ) : (
-                    /* --- EMPTY STATE --- */
                     <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center flex flex-col items-center justify-center">
                         <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-4">
                             <SearchIcon size={40} className="text-slate-400" />
@@ -129,7 +122,6 @@ export default async function SearchPage({
                         </Link>
                     </div>
                 )}
-
             </main>
         </div>
     );
