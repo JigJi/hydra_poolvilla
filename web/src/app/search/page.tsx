@@ -57,7 +57,7 @@ export default async function SearchPage(props: {
                     </h1>
                     {cleanQuery ? (
                         <p className="text-slate-500 text-lg">
-                            พบวิลล่า <span className="font-bold text-blue-600">{villas.length}</span> แห่ง สำหรับ "{cleanQuery}"
+                            พบวิลล่า <span className="font-bold text-blue-600">{villas.length}</span> แห่ง สำหรับ &quot;{cleanQuery}&quot;
                         </p>
                     ) : (
                         <p className="text-slate-500 text-lg">วิลล่าทั้งหมดของเรา</p>

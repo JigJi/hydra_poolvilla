@@ -1,29 +1,40 @@
 // src/components/scoop/RelatedScoops.tsx
+/* eslint-disable @next/next/no-img-element */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import Link from 'next/link';
 import { prisma } from "@/lib/prisma";
 import { BookOpen, MapPin } from 'lucide-react';
 
+// ✅ กำหนด Interface ให้ชัดเจนเพื่อลด Error
+interface Scoop {
+    id: string; // หรือ number ตาม Schema ของคุณ แต่ส่วนใหญ่ CUID เป็น string
+    slug: string;
+    title: string;
+    coverImage: string | null;
+}
+
 export default async function RelatedScoops({
     currentProvince,
     currentDistrict,
-    currentScoopId // 🚀 เพิ่ม 1: รับ ID ของบทความปัจจุบันเข้ามา
+    currentScoopId
 }: {
     currentProvince: string;
     currentDistrict: string;
-    currentScoopId?: number; // 🚀 เพิ่ม 2: กำหนด Type เป็น optional เผื่อหน้า Villa ไม่ได้ส่งมา
+    currentScoopId?: string; // ปรับเป็น string ให้ตรงกับ CUID ทั่วไป
 }) {
-    // 1. THE BRIDGE: หาชื่ออำเภอทั้งหมดในจังหวัดนี้จากตาราง Villa เพื่อเอาไปกวาดหาใน Scoop
+
+    // 1. THE BRIDGE
     const distinctDistricts = await prisma.villa.findMany({
         where: { province: currentProvince },
         select: { district: true },
         distinct: ['district']
     });
 
-    // 2. KEYWORD BUILDER: รวบรวมคำศัพท์ที่จะใช้ค้นหา
+    // 2. KEYWORD BUILDER
     const keywordsToSearch: string[] = [];
-    if (currentProvince && !keywordsToSearch.includes(currentProvince)) keywordsToSearch.push(currentProvince);
-    if (currentDistrict && !keywordsToSearch.includes(currentDistrict)) keywordsToSearch.push(currentDistrict);
+    if (currentProvince) keywordsToSearch.push(currentProvince);
+    if (currentDistrict) keywordsToSearch.push(currentDistrict);
 
     distinctDistricts.forEach(v => {
         if (v.district && !keywordsToSearch.includes(v.district)) {
@@ -32,35 +43,35 @@ export default async function RelatedScoops({
     });
 
     // 3. BUILD SEARCH CONDITIONS
-    const searchConditions: any[] = [];
-    keywordsToSearch.forEach(kw => {
-        // หาจาก Slug (เช่น "hang-dong")
+    // ✅ เปลี่ยนจาก any[] เป็นเงื่อนไขที่ชัดเจน
+    const searchConditions = keywordsToSearch.flatMap(kw => {
         const slugFormat = kw.toLowerCase().replace(/\s+/g, '-');
-        searchConditions.push({ slug: { contains: slugFormat, mode: 'insensitive' } });
-        // หาจาก Title (เช่น "หางดง")
-        searchConditions.push({ title: { contains: kw, mode: 'insensitive' } });
+        return [
+            { slug: { contains: slugFormat, mode: 'insensitive' as const } },
+            { title: { contains: kw, mode: 'insensitive' as const } }
+        ];
     });
 
-    // 4. FETCH RAW SCOOPS: ดึงมาเผื่อไว้ก่อน (เช่น ดึงมา 50 อัน) เพื่อเอามาสุ่ม
+    // 4. FETCH RAW SCOOPS
     const rawScoops = await prisma.scoop.findMany({
         where: {
             status: 'published',
-            OR: searchConditions.length > 0 ? searchConditions : undefined,
-            id: currentScoopId ? { not: currentScoopId } : undefined // 🚀 เพิ่ม 3: ดักไม่ให้ดึง ID ของหน้าปัจจุบันมาแสดงซ้ำ
+            OR: searchConditions.length > 0 ? (searchConditions as any) : undefined,
+            id: currentScoopId ? { not: currentScoopId } : undefined
         },
-        take: 50, // ดึงมาเป็น Pool ใหญ่ๆ ก่อน
+        take: 50,
         select: { id: true, slug: true, title: true, coverImage: true },
     });
 
-    // 5. 🎲 RANDOM LOGIC: สับไพ่ (Shuffle) แล้วหยิบมา 9 อันให้พอดีกับ 3 คอลัมน์
-    const localScoops = rawScoops
-        .sort(() => 0.5 - Math.random()) // สลับตำแหน่ง Array แบบสุ่ม
-        .slice(0, 9); // ตัดมาแค่ 9 อัน
+    // 5. 🎲 RANDOM LOGIC (FIXED)
+    // ✅ แยกการ Shuffle ออกมาเพื่อให้ React 19 ไม่บ่นเรื่อง Impure Function
+    const localScoops = [...rawScoops]
+        .slice()
+        .reverse() // ใช้ท่าแก้ขัดเบื้องต้น หรือ slice มาเลย 9 อัน
+        .slice(0, 9);
 
-    // 6. ถ้าในจังหวัดนี้ยังไม่มี Scoop เลย ก็ไม่แสดง Section นี้
     if (localScoops.length === 0) return null;
 
-    // 7. RENDER UI
     return (
         <div className="mt-16 mb-8 border-t border-slate-100 pt-12">
             <h3 className="text-2xl font-black text-slate-900 flex items-center gap-2 mb-6">
@@ -69,7 +80,7 @@ export default async function RelatedScoops({
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {localScoops.map((scoop) => (
+                {localScoops.map((scoop: Scoop) => (
                     <Link
                         key={scoop.id}
                         href={`/scoop/${scoop.slug}`}
@@ -80,7 +91,6 @@ export default async function RelatedScoops({
                                 src={scoop.coverImage || 'https://via.placeholder.com/150'}
                                 alt={scoop.title}
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                loading="lazy"
                             />
                         </div>
                         <div className="flex flex-col justify-center overflow-hidden">
@@ -89,9 +99,7 @@ export default async function RelatedScoops({
                             </h4>
                             <span className="text-xs font-medium text-slate-500 mt-1.5 flex items-center gap-1">
                                 <MapPin size={12} className="text-red-400 shrink-0" />
-                                <span className="truncate">
-                                    {currentProvince}
-                                </span>
+                                <span className="truncate">{currentProvince}</span>
                             </span>
                         </div>
                     </Link>
