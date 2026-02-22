@@ -3,6 +3,7 @@ import React from 'react';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { BookOpen, Calendar, ChevronRight } from 'lucide-react';
+import Image from 'next/image';
 
 export const metadata = {
     title: 'บทความและที่เที่ยวพูลวิลล่า | Pool Villa Finder',
@@ -52,11 +53,13 @@ export default async function ScoopListPage() {
                                 className="group bg-white rounded-3xl border border-slate-200 overflow-hidden hover:shadow-2xl transition-all duration-500 flex flex-col"
                             >
                                 {/* Image Wrap */}
-                                <div className="aspect-[16/10] overflow-hidden bg-slate-100">
-                                    <img
+                                <div className="aspect-[16/10] relative overflow-hidden bg-slate-100">
+                                    <Image
                                         src={scoop.coverImage || '/placeholder.jpg'}
                                         alt={scoop.title}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                        fill
+                                        unoptimized
+                                        className="object-cover group-hover:scale-105 transition-transform duration-700"
                                     />
                                 </div>
 
