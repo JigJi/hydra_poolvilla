@@ -59,6 +59,7 @@ export default async function ScoopListPage() {
                                         alt={scoop.title}
                                         fill
                                         unoptimized
+                                        referrerPolicy="no-referrer"
                                         className="object-cover group-hover:scale-105 transition-transform duration-700"
                                     />
                                 </div>
