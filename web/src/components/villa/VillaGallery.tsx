@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-'use client'; // สำคัญ! ต้องมีบรรทัดนี้เพราะมีการใช้ useState
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
@@ -17,12 +17,16 @@ export default function VillaGallery({ images, title }: VillaGalleryProps) {
     const openGallery = (index: number) => {
         setPhotoIndex(index);
         setIsGalleryOpen(true);
-        document.body.style.overflow = 'hidden'; // ล็อก Scroll
+        if (typeof window !== 'undefined') {
+            document.body.style.overflow = 'hidden';
+        }
     };
 
     const closeGallery = useCallback(() => {
         setIsGalleryOpen(false);
-        document.body.style.overflow = 'unset'; // ปลดล็อก
+        if (typeof window !== 'undefined') {
+            document.body.style.overflow = 'unset';
+        }
     }, []);
 
     const nextPhoto = useCallback((e?: any) => {
@@ -35,7 +39,6 @@ export default function VillaGallery({ images, title }: VillaGalleryProps) {
         setPhotoIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
     }, [images.length]);
 
-    // Keyboard Navigation
     useEffect(() => {
         if (!isGalleryOpen) return;
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -47,7 +50,6 @@ export default function VillaGallery({ images, title }: VillaGalleryProps) {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isGalleryOpen, nextPhoto, prevPhoto, closeGallery]);
 
-    // ถ้าไม่มีรูปเลย ให้ return null หรือ placeholder
     if (!images || images.length === 0) return null;
 
     return (
@@ -62,6 +64,7 @@ export default function VillaGallery({ images, title }: VillaGalleryProps) {
                         alt={`View of ${title}`}
                         fill
                         priority
+                        unoptimized // 🚀 แก้ตรงนี้
                         className="object-cover transition duration-700 group-hover:scale-105"
                         sizes="(max-width: 768px) 100vw, 50vw"
                     />
@@ -72,13 +75,27 @@ export default function VillaGallery({ images, title }: VillaGalleryProps) {
                 <div className="hidden md:grid grid-rows-2 gap-2 md:col-span-1 h-full">
                     {images[1] && (
                         <div onClick={() => openGallery(1)} className="bg-slate-100 relative group overflow-hidden cursor-pointer">
-                            <Image src={images[1]} alt="Gallery 2" fill className="object-cover transition duration-700 group-hover:scale-105" sizes="25vw" />
+                            <Image
+                                src={images[1]}
+                                alt="Gallery 2"
+                                fill
+                                unoptimized // 🚀 แก้ตรงนี้
+                                className="object-cover transition duration-700 group-hover:scale-105"
+                                sizes="25vw"
+                            />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition duration-300" />
                         </div>
                     )}
                     {images[2] && (
                         <div onClick={() => openGallery(2)} className="bg-slate-100 relative group overflow-hidden cursor-pointer">
-                            <Image src={images[2]} alt="Gallery 3" fill className="object-cover transition duration-700 group-hover:scale-105" sizes="25vw" />
+                            <Image
+                                src={images[2]}
+                                alt="Gallery 3"
+                                fill
+                                unoptimized // 🚀 แก้ตรงนี้
+                                className="object-cover transition duration-700 group-hover:scale-105"
+                                sizes="25vw"
+                            />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition duration-300" />
                         </div>
                     )}
@@ -87,10 +104,16 @@ export default function VillaGallery({ images, title }: VillaGalleryProps) {
                 {/* 3. รูปขวาสุด (Index 3 + View All) */}
                 {images[3] && (
                     <div onClick={() => openGallery(3)} className="hidden md:block relative bg-slate-100 md:col-span-1 overflow-hidden group cursor-pointer">
-                        <Image src={images[3]} alt="Gallery 4" fill className="object-cover opacity-90 transition duration-700 group-hover:scale-105" sizes="25vw" />
+                        <Image
+                            src={images[3]}
+                            alt="Gallery 4"
+                            fill
+                            unoptimized // 🚀 แก้ตรงนี้
+                            className="object-cover opacity-90 transition duration-700 group-hover:scale-105"
+                            sizes="25vw"
+                        />
                         <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition duration-300" />
 
-                        {/* View All Button */}
                         <div className="absolute inset-0 flex items-center justify-center z-10">
                             <span className="text-white font-bold border border-white/80 bg-black/20 px-5 py-2.5 rounded-xl backdrop-blur-md hover:bg-white hover:text-slate-900 hover:border-white transition-all transform hover:scale-105 shadow-lg">
                                 ดูรูปทั้งหมด ({images.length})
@@ -113,6 +136,7 @@ export default function VillaGallery({ images, title }: VillaGalleryProps) {
                                 src={images[photoIndex]}
                                 alt={`Gallery image ${photoIndex + 1}`}
                                 fill
+                                unoptimized // 🚀 แก้ตรงนี้ (สำคัญมากสำหรับรูปขนาดใหญ่)
                                 className="object-contain"
                                 priority
                                 quality={100}
