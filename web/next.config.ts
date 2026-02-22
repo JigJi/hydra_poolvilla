@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 'cf.bstatic.com',
+      },
+      {
+        protocol: 'https',
         hostname: '**.bstatic.com',
       },
       {
@@ -17,6 +21,7 @@ const nextConfig: NextConfig = {
         hostname: 'via.placeholder.com',
       },
     ],
+    unoptimized: true,
   },
   // 🚀 เพิ่ม 2 ส่วนนี้เข้าไปเพื่อ "ข้าม" ด่านตรวจที่ทำให้ Build พังครับ
   typescript: {

@@ -53,13 +53,13 @@ export default async function ScoopListPage() {
                                 className="group bg-white rounded-3xl border border-slate-200 overflow-hidden hover:shadow-2xl transition-all duration-500 flex flex-col"
                             >
                                 {/* Image Wrap */}
-                                <div className="aspect-[16/10] relative overflow-hidden bg-slate-100">
+                                <div className="aspect-[16/10] relative overflow-hidden bg-slate-100"> {/* 👈 ต้องมี relative */}
                                     <Image
                                         src={scoop.coverImage || '/placeholder.jpg'}
                                         alt={scoop.title}
-                                        fill
-                                        unoptimized
-                                        referrerPolicy="no-referrer"
+                                        fill // 👈 ใช้ fill เพื่อให้รูปเต็มกรอบ aspect ratio
+                                        unoptimized // 🚀 บังคับอีกทีเพื่อความชัวร์
+                                        referrerPolicy="no-referrer" // 🚀 ยันต์กันบล็อก
                                         className="object-cover group-hover:scale-105 transition-transform duration-700"
                                     />
                                 </div>
