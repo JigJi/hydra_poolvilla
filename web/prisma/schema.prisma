@@ -55,6 +55,9 @@ model Villa {
   scoops            Scoop[]  @relation("ScoopToVilla")
   lastIndexedAt     DateTime?
 
+  // --- Relation ไปยัง Table ใหม่ ---
+  feature           VillaFeature?
+
   @@index([province, district])
   @@index([priceDaily])
   @@index([maxGuests])
@@ -63,12 +66,66 @@ model Villa {
   @@map("Villa")
 }
 
+model VillaFeature {
+  id                Int      @id @default(autoincrement())
+  villaId           Int      @unique // ทำ 1:1 กับ Villa
+  villa             Villa    @relation(fields: [villaId], references: [id], onDelete: Cascade)
+
+  // --- ย้าย 30 Bucketed Columns มาไว้ที่นี่ทั้งหมด ---
+  price_daily_tier     String?
+  price_head_tier      String?
+  review_tier          String?
+  capacity_tier        String?
+  bedroom_tier         String?
+  rating_tier          String?
+  
+  near_beach           String?
+  near_attraction      String?
+  near_public_transport String?
+  near_airport         String?
+  near_lifestyle       String?
+  
+  fac_entertainment    String?
+  fac_kitchen_dining   String?
+  fac_outdoor          String?
+  fac_view             String?
+  fac_wellness         String?
+  fac_service          String?
+  fac_safety           String?
+  fac_family           String?
+  fac_comfort          String?
+  
+  is_pet_friendly      String?
+  
+  review_wifi          String?
+  review_value         String?
+  review_facilities    String?
+  review_cleanliness   String?
+  review_comfort       String?
+  review_staff         String?
+  review_location      String?
+
+  // ใส่ Index ในตัวที่ใช้ Filter บ่อยๆ
+  @@index([near_beach])
+  @@index([is_pet_friendly])
+  @@index([price_head_tier])
+}
+
 model Scoop {
   id          Int       @id @default(autoincrement())
   title       String
   slug        String    @unique
   description String?
   coverImage  String?
+
+  // --- สำหรับแสดงหัวข้อใหญ่ในหน้าเว็บ ---
+  h1              String?   
+  
+  // --- เก็บจำนวนวิลล่าที่แมตช์ไว้เลย (ลดโหลด DB) ---
+  countVilla      Int       @default(0) 
+
+  // --- คุมลำดับการปล่อยหน้า (0=Draft, 1=High, 2=Normal) ---
+  priority        Int       @default(0)
   
   // Maps to scoop_type in Python
   type        String    @default("listicle") 
@@ -98,6 +155,8 @@ model Scoop {
   lastIndexedAt  DateTime?
 
   @@index([slug])
+  @@index([countVilla])
+  @@index([priority])
 }
 
 model StockImage {

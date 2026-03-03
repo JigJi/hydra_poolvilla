@@ -8,10 +8,11 @@ import { BookOpen, MapPin } from 'lucide-react';
 
 // ✅ กำหนด Interface ให้ชัดเจนเพื่อลด Error
 interface Scoop {
-    id: string; // หรือ number ตาม Schema ของคุณ แต่ส่วนใหญ่ CUID เป็น string
+    id: string;
     slug: string;
     title: string;
     coverImage: string | null;
+    rule: any;
 }
 
 export default async function RelatedScoops({
@@ -60,7 +61,7 @@ export default async function RelatedScoops({
             id: currentScoopId ? { not: currentScoopId } : undefined
         },
         take: 50,
-        select: { id: true, slug: true, title: true, coverImage: true },
+        select: { id: true, slug: true, title: true, coverImage: true, rule: true },
     });
 
     // 5. 🎲 RANDOM LOGIC (FIXED)
@@ -80,30 +81,37 @@ export default async function RelatedScoops({
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {localScoops.map((scoop: Scoop) => (
-                    <Link
-                        key={scoop.id}
-                        href={`/scoop/${scoop.slug}`}
-                        className="group flex gap-3 p-3 rounded-2xl border border-slate-200 hover:border-blue-400 hover:shadow-[0_8px_15px_-3px_rgba(59,130,246,0.1)] transition-all duration-300 bg-white"
-                    >
-                        <div className="w-20 h-20 rounded-xl bg-slate-100 shrink-0 overflow-hidden relative">
-                            <img
-                                src={scoop.coverImage || 'https://via.placeholder.com/150'}
-                                alt={scoop.title}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                            />
-                        </div>
-                        <div className="flex flex-col justify-center overflow-hidden">
-                            <h4 className="text-sm font-bold text-slate-800 line-clamp-2 group-hover:text-blue-600 transition-colors">
-                                {scoop.title}
-                            </h4>
-                            <span className="text-xs font-medium text-slate-500 mt-1.5 flex items-center gap-1">
-                                <MapPin size={12} className="text-red-400 shrink-0" />
-                                <span className="truncate">{currentProvince}</span>
-                            </span>
-                        </div>
-                    </Link>
-                ))}
+                {localScoops.map((scoop: Scoop) => {
+                    const scoopRule = typeof scoop.rule === 'string' ? JSON.parse(scoop.rule) : (scoop.rule || {});
+                    const scoopDistrict = scoopRule.district || '';
+                    const scoopProvince = scoopRule.province || '';
+                    const locationLabel = [scoopDistrict, scoopProvince].filter(Boolean).join(', ') || currentProvince;
+
+                    return (
+                        <Link
+                            key={scoop.id}
+                            href={`/scoop/${scoop.slug}`}
+                            className="group flex gap-3 p-3 rounded-2xl border border-slate-200 hover:border-blue-400 hover:shadow-[0_8px_15px_-3px_rgba(59,130,246,0.1)] transition-all duration-300 bg-white"
+                        >
+                            <div className="w-20 h-20 rounded-xl bg-slate-100 shrink-0 overflow-hidden relative">
+                                <img
+                                    src={scoop.coverImage || 'https://via.placeholder.com/150'}
+                                    alt={scoop.title}
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                />
+                            </div>
+                            <div className="flex flex-col justify-center overflow-hidden">
+                                <h4 className="text-sm font-bold text-slate-800 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                                    {scoop.title}
+                                </h4>
+                                <span className="text-xs font-medium text-slate-500 mt-1.5 flex items-center gap-1">
+                                    <MapPin size={12} className="text-red-400 shrink-0" />
+                                    <span className="truncate">{locationLabel}</span>
+                                </span>
+                            </div>
+                        </Link>
+                    );
+                })}
             </div>
         </div>
     );

@@ -41,32 +41,45 @@ const getScoop = cache(async (slug: string) => {
 // --- Helper: แปลง Rule (ตัวใหม่ที่ฉลาดขึ้น รองรับ JSON จริงๆ) ---
 const parseRuleToPrisma = (ruleData: any) => {
     const where: any = { isActive: true };
-    const orderBy: any = {};
+    const orderBy: any[] = [];
     let take = 10;
 
-    if (!ruleData) return { where, orderBy, take };
+    if (!ruleData) return { where, orderBy: [{ rating: 'desc' }, { reviewCount: 'desc' }], take };
 
     try {
         const rule = typeof ruleData === 'string' ? JSON.parse(ruleData) : ruleData;
 
+        // รองรับทั้ง flat format (root level) และ nested format (settings/filters)
+        const settings = rule.settings || {};
+
         if (rule.province) where.province = rule.province;
         if (rule.district) where.district = rule.district;
-        if (rule.minReviewCount) where.reviewCount = { gte: Number(rule.minReviewCount) };
+
+        // กรองวิลล่าที่รีวิวน้อยเกินไปออก (default: 3)
+        const minReviews = Number(rule.minReviewCount || settings.minReviewCount || 3);
+        if (minReviews > 0) where.reviewCount = { gte: minReviews };
+
         if (rule.price_max) where.priceDaily = { lte: Number(rule.price_max) };
         if (rule.guests_min) where.maxGuests = { gte: Number(rule.guests_min) };
 
-        const sortField = rule.sortBy || 'rating';
-        const sortOrder = rule.order || 'desc';
+        const sortField = rule.sortBy || settings.sortBy || 'rating';
+        const sortOrder = rule.order || settings.order || 'desc';
 
+        // Sort หลัก
         switch (sortField) {
-            case 'rating': orderBy.rating = sortOrder; break;
-            case 'price': orderBy.priceDaily = sortOrder; break;
-            case 'reviewCount': case 'reviews': orderBy.reviewCount = sortOrder; break;
-            case 'date': case 'newest': orderBy.createdAt = sortOrder; break;
-            default: orderBy[sortField] = sortOrder;
+            case 'rating': orderBy.push({ rating: sortOrder }); break;
+            case 'price': orderBy.push({ priceDaily: sortOrder }); break;
+            case 'reviewCount': case 'reviews': orderBy.push({ reviewCount: sortOrder }); break;
+            case 'date': case 'newest': orderBy.push({ createdAt: sortOrder }); break;
+            default: orderBy.push({ [sortField]: sortOrder });
         }
 
-        if (rule.limit) take = Number(rule.limit);
+        // Sort รอง: rating เท่ากัน → เอารีวิวเยอะขึ้นก่อน
+        if (sortField !== 'reviewCount' && sortField !== 'reviews') {
+            orderBy.push({ reviewCount: 'desc' });
+        }
+
+        if (rule.limit || settings.limit) take = Number(rule.limit || settings.limit);
 
     } catch (e) {
         console.error("Error parsing rule:", e);
