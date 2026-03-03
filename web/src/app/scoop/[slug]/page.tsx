@@ -39,6 +39,17 @@ const getScoop = cache(async (slug: string) => {
 });
 
 // --- Helper: แปลง Rule (ตัวใหม่ที่ฉลาดขึ้น รองรับ JSON จริงๆ) ---
+// VillaFeature columns ที่ใช้ filter ได้
+const FEATURE_FILTER_KEYS = new Set([
+    'price_daily_tier', 'price_head_tier', 'capacity_tier', 'bedroom_tier', 'rating_tier',
+    'near_beach', 'near_attraction', 'near_public_transport', 'near_airport', 'near_lifestyle',
+    'fac_outdoor', 'fac_view', 'fac_wellness', 'fac_kitchen_dining',
+    'fac_service', 'fac_safety', 'fac_family', 'fac_comfort', 'fac_entertainment',
+    'is_pet_friendly',
+    'review_wifi', 'review_value', 'review_facilities', 'review_cleanliness',
+    'review_comfort', 'review_staff', 'review_location',
+]);
+
 const parseRuleToPrisma = (ruleData: any) => {
     const where: any = { isActive: true };
     const orderBy: any[] = [];
@@ -61,6 +72,18 @@ const parseRuleToPrisma = (ruleData: any) => {
 
         if (rule.price_max) where.priceDaily = { lte: Number(rule.price_max) };
         if (rule.guests_min) where.maxGuests = { gte: Number(rule.guests_min) };
+
+        // ใช้ rule.filters เพื่อ join กับ VillaFeature — กรองวิลล่าตาม feature จริง
+        const filters = rule.filters || {};
+        const featureWhere: any = {};
+        for (const [key, value] of Object.entries(filters)) {
+            if (FEATURE_FILTER_KEYS.has(key) && typeof value === 'string') {
+                featureWhere[key] = { not: null };
+            }
+        }
+        if (Object.keys(featureWhere).length > 0) {
+            where.feature = featureWhere;
+        }
 
         const sortField = rule.sortBy || settings.sortBy || 'rating';
         const sortOrder = rule.order || settings.order || 'desc';
@@ -86,6 +109,20 @@ const parseRuleToPrisma = (ruleData: any) => {
     }
     return { where, orderBy, take };
 };
+
+// Deterministic shuffle — ใช้ scoopId เป็น seed ทำให้แต่ละ scoop ได้วิลล่าคนละชุด
+// แต่ reload หน้าเดิมได้ผลเหมือนเดิม (cache-friendly)
+function seededShuffle<T>(arr: T[], seed: number): T[] {
+    const shuffled = [...arr];
+    let s = seed;
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        // simple hash: multiply, add, mod
+        s = (s * 1103515245 + 12345) & 0x7fffffff;
+        const j = s % (i + 1);
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
 
 // แกะระยะทางจากสถานที่ใกล้เคียง (คงเดิม)
 const getDistanceToSea = (nearbyPlaces: any) => {
@@ -130,8 +167,13 @@ export default async function ScoopMagazinePage({ params }: { params: Promise<{ 
     const currentProvince = ruleData.province || '';
     const currentDistrict = ruleData.district || '';
 
-    const villas = await prisma.villa.findMany({
-        ...queryOptions,
+    // ดึง pool ใหญ่ (3x) แล้ว shuffle ด้วย scoop.id เพื่อให้แต่ละ scoop ได้วิลล่าคนละชุด
+    const desiredCount = queryOptions.take;
+    const { take: _take, ...restOptions } = queryOptions;
+
+    const villaPool = await prisma.villa.findMany({
+        ...restOptions,
+        take: desiredCount * 3,
         select: {
             id: true, title: true, slug: true, coverImage: true,
             priceDaily: true, maxGuests: true, bedrooms: true,
@@ -139,6 +181,8 @@ export default async function ScoopMagazinePage({ params }: { params: Promise<{ 
             facility_tags: true, nearbyPlaces: true, content_listing: true,
         },
     });
+
+    const villas = seededShuffle(villaPool, scoop.id).slice(0, desiredCount);
 
     const startPrice = villas.length > 0 ? Math.min(...villas.map(v => v.priceDaily)) : 0;
     const avgRating = villas.length > 0 ? (villas.reduce((a, b) => a + (b.rating || 0), 0) / villas.length).toFixed(1) : '-';
