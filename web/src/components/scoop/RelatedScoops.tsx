@@ -6,9 +6,8 @@ import Link from 'next/link';
 import { prisma } from "@/lib/prisma";
 import { BookOpen, MapPin } from 'lucide-react';
 
-// ✅ กำหนด Interface ให้ชัดเจนเพื่อลด Error
 interface Scoop {
-    id: string;
+    id: number;
     slug: string;
     title: string;
     coverImage: string | null;
@@ -22,70 +21,61 @@ export default async function RelatedScoops({
 }: {
     currentProvince: string;
     currentDistrict: string;
-    currentScoopId?: string; // ปรับเป็น string ให้ตรงกับ CUID ทั่วไป
+    currentScoopId?: number;
 }) {
+    // สร้าง search terms จากทั้ง district และ province
+    const searchTerms: { slug: string; title: string }[] = [];
 
-    // 1. THE BRIDGE
-    const distinctDistricts = await prisma.villa.findMany({
-        where: { province: currentProvince },
-        select: { district: true },
-        distinct: ['district']
-    });
+    if (currentDistrict) {
+        searchTerms.push({
+            slug: currentDistrict.toLowerCase().replace(/\s+/g, '-'),
+            title: currentDistrict,
+        });
+    }
+    if (currentProvince) {
+        searchTerms.push({
+            slug: currentProvince.toLowerCase().replace(/\s+/g, '-'),
+            title: currentProvince,
+        });
+    }
 
-    // 2. KEYWORD BUILDER
-    const keywordsToSearch: string[] = [];
-    if (currentProvince) keywordsToSearch.push(currentProvince);
-    if (currentDistrict) keywordsToSearch.push(currentDistrict);
+    if (searchTerms.length === 0) return null;
 
-    distinctDistricts.forEach(v => {
-        if (v.district && !keywordsToSearch.includes(v.district)) {
-            keywordsToSearch.push(v.district);
-        }
-    });
+    const orConditions = searchTerms.flatMap((t) => [
+        { slug: { contains: t.slug, mode: 'insensitive' as const } },
+        { title: { contains: t.title, mode: 'insensitive' as const } },
+    ]);
 
-    // 3. BUILD SEARCH CONDITIONS
-    // ✅ เปลี่ยนจาก any[] เป็นเงื่อนไขที่ชัดเจน
-    const searchConditions = keywordsToSearch.flatMap(kw => {
-        const slugFormat = kw.toLowerCase().replace(/\s+/g, '-');
-        return [
-            { slug: { contains: slugFormat, mode: 'insensitive' as const } },
-            { title: { contains: kw, mode: 'insensitive' as const } }
-        ];
-    });
-
-    // 4. FETCH RAW SCOOPS
     const rawScoops = await prisma.scoop.findMany({
         where: {
             status: 'published',
-            OR: searchConditions.length > 0 ? (searchConditions as any) : undefined,
-            id: currentScoopId ? { not: currentScoopId } : undefined
+            id: currentScoopId ? { not: currentScoopId } : undefined,
+            // กรอง scoop เก่าออก
+            NOT: { slug: { startsWith: 'pool-villas-' } },
+            OR: orConditions,
         },
-        take: 50,
+        take: 9,
+        orderBy: { publishedAt: 'desc' },
         select: { id: true, slug: true, title: true, coverImage: true, rule: true },
     });
 
-    // 5. 🎲 RANDOM LOGIC (FIXED)
-    // ✅ แยกการ Shuffle ออกมาเพื่อให้ React 19 ไม่บ่นเรื่อง Impure Function
-    const localScoops = [...rawScoops]
-        .slice()
-        .reverse() // ใช้ท่าแก้ขัดเบื้องต้น หรือ slice มาเลย 9 อัน
-        .slice(0, 9);
+    if (rawScoops.length === 0) return null;
 
-    if (localScoops.length === 0) return null;
+    const displayLocation = currentDistrict || currentProvince;
 
     return (
         <div className="mt-16 mb-8 border-t border-slate-100 pt-12">
             <h3 className="text-2xl font-black text-slate-900 flex items-center gap-2 mb-6">
                 <BookOpen size={28} className="text-blue-600" />
-                บทความแนะนำและที่เที่ยว {currentProvince}
+                บทความแนะนำและที่เที่ยว{displayLocation}
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {localScoops.map((scoop: Scoop) => {
+                {rawScoops.map((scoop: Scoop) => {
                     const scoopRule = typeof scoop.rule === 'string' ? JSON.parse(scoop.rule) : (scoop.rule || {});
                     const scoopDistrict = scoopRule.district || '';
                     const scoopProvince = scoopRule.province || '';
-                    const locationLabel = [scoopDistrict, scoopProvince].filter(Boolean).join(', ') || currentProvince;
+                    const locationLabel = [scoopDistrict, scoopProvince].filter(Boolean).join(', ') || displayLocation;
 
                     return (
                         <Link

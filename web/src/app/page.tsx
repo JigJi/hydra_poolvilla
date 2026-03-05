@@ -16,23 +16,29 @@ export const metadata = {
 
 // 📍 Hardcode ปลายทางยอดฮิต (ดีต่อ UX และ SEO Internal Link)
 const TOP_DESTINATIONS = [
-    { name: 'พัทยา', slug: 'pattaya', icon: '🏖️' },
-    { name: 'หัวหิน', slug: 'hua-hin', icon: '🌊' },
-    { name: 'เชียงใหม่', slug: 'chiang-mai', icon: '⛰️' },
-    { name: 'ภูเก็ต', slug: 'phuket', icon: '🏝️' },
-    { name: 'เขาใหญ่', slug: 'khao-yai', icon: '🏕️' },
-    { name: 'ชะอำ', slug: 'cha-am', icon: '🏄‍♂️' },
+    { name: 'พัทยา', slug: 'top-pool-villas-pattaya-2026', icon: '🏖️' },
+    { name: 'หัวหิน', slug: 'top-pool-villas-hua-hin-2026', icon: '🌊' },
+    { name: 'เชียงใหม่', slug: 'top-pool-villas-mueang-chiang-mai-2026', icon: '⛰️' },
+    { name: 'ภูเก็ต', slug: 'top-pool-villas-mueang-phuket-2026', icon: '🏝️' },
+    { name: 'เขาใหญ่', slug: 'top-pool-villas-pak-chong-2026', icon: '🏕️' },
+    { name: 'ชะอำ', slug: 'top-pool-villas-cha-am-2026', icon: '🏄‍♂️' },
 ];
 
 export default async function LandingPage() {
     // 🚀 Parallel Data Fetching: ดึงมาแค่ที่ใช้จริง ลดภาระ Database
     const [latestScoops, latestVillas] = await Promise.all([
         // 1. ดึง Scoop ล่าสุด 11 อัน (5 อันไปทำ Hero Slider, 6 อันลง Grid ด้านล่าง)
+        // กรอง scoop เก่า (pool-villas-*) ออก เพราะ noindex แล้ว
         prisma.scoop.findMany({
-            where: { status: 'published' },
+            where: {
+                status: 'published',
+                NOT: {
+                    slug: { startsWith: 'pool-villas-' },
+                },
+            },
             orderBy: { updatedAt: 'desc' },
             take: 11,
-            select: { id: true, title: true, slug: true, coverImage: true } // ✅ ลบ province ออกแล้ว!
+            select: { id: true, title: true, slug: true, coverImage: true }
         }),
 
         // 2. ดึง Villa มาใหม่ 8 หลัง
@@ -51,9 +57,24 @@ export default async function LandingPage() {
     }));
     const gridScoops = latestScoops.slice(5, 11);
 
+    const websiteJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'PoolVillaFinder',
+        url: 'https://poolvillafinder.com',
+        potentialAction: {
+            '@type': 'SearchAction',
+            target: 'https://poolvillafinder.com/search?q={search_term_string}',
+            'query-input': 'required name=search_term_string',
+        },
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 font-sans pb-20">
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
             <main className="max-w-7xl mx-auto px-4 py-8 space-y-16">
+
+                <h1 className="sr-only">PoolVillaFinder - ค้นหาและจองพูลวิลล่าทั่วไทย</h1>
 
                 {/* --- SECTION 1: HERO SLIDER --- */}
                 {heroScoops.length > 0 && (
@@ -82,7 +103,7 @@ export default async function LandingPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
                         {TOP_DESTINATIONS.map((dest) => (
                             <Link
-                                href={`/search?province=${dest.slug}`} // หรือลิงก์ไปหน้า Scoop รวมของจังหวัดนั้น
+                                href={`/scoop/${dest.slug}`}
                                 key={dest.slug}
                                 className="bg-white border border-slate-200 hover:border-blue-400 hover:shadow-md rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-all group"
                             >

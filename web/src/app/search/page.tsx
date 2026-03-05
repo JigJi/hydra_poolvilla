@@ -7,6 +7,11 @@ import { Button } from "@/components/ui/button";
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+    title: 'ค้นหาพูลวิลล่าทั่วไทย',
+    robots: { index: false, follow: true },
+};
+
 // ✅ แก้ไข Type ตรงนี้ให้ searchParams เป็น Promise
 export default async function SearchPage(props: {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

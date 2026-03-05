@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import * as LucideIcons from 'lucide-react';
+import { getFacilityIcon } from '@/lib/facility-icons';
+import { Info } from 'lucide-react';
 import VillaFacilities from "@/components/villa/VillaFacilities";
 import VillaGallery from '@/components/villa/VillaGallery';
 import RelatedVillas from '@/components/villa/RelatedVillas';
@@ -31,9 +32,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return {
         title: `${villa.title} | พูลวิลล่า ${villa.province} เริ่มต้น ฿${villa.priceDaily.toLocaleString()}`,
         description: `จองพูลวิลล่า ${villa.title} จังหวัด ${villa.province} พักได้สูงสุด ${villa.maxGuests} ท่าน มี ${villa.bedrooms} ห้องนอน สิ่งอำนวยความสะดวกครบครัน ราคาพิเศษ เริ่มต้นเพียง ฿${villa.priceDaily.toLocaleString()}/คืน`,
+        alternates: {
+            canonical: `/villa/${slug}`,
+        },
         openGraph: {
-            images: (villa.images as string[])?.[0] || '',
-        }
+            title: `${villa.title} | พูลวิลล่า ${villa.province}`,
+            description: `พูลวิลล่า ${villa.province} ${villa.bedrooms} ห้องนอน ${villa.maxGuests} ท่าน เริ่มต้น ฿${villa.priceDaily.toLocaleString()}/คืน`,
+            type: 'website',
+            images: (villa.images as string[])?.[0] ? [{
+                url: (villa.images as string[])[0],
+                width: 1200,
+                height: 630,
+                alt: villa.title,
+            }] : [],
+        },
     };
 }
 
@@ -180,13 +192,20 @@ export default async function VillaDetailPage({ params }: { params: Promise<{ sl
         .sort((a, b) => b.score - a.score)
         .slice(0, 5);
 
+    const breadcrumbJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://poolvillafinder.com' },
+            { '@type': 'ListItem', position: 2, name: `พูลวิลล่า ${villa.province}`, item: `https://poolvillafinder.com/search?province=${villa.province}` },
+            { '@type': 'ListItem', position: 3, name: villa.title },
+        ],
+    };
+
     return (
         <div className="min-h-screen bg-white pb-20 font-sans text-slate-900">
-            {/* 🚀 เพิ่ม: ฝัง Script Schema Markup (ผู้ใช้มองไม่เห็น แต่บอท Google เห็น!) */}
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-            />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
 
             <main className="max-w-7xl mx-auto px-4 py-6">
 
@@ -233,7 +252,7 @@ export default async function VillaDetailPage({ params }: { params: Promise<{ sl
                         {displayTags.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-6">
                                 {displayTags.map((tag: any, index: number) => {
-                                    const IconComponent = (LucideIcons as any)[tag.icon] || LucideIcons.CheckCircle;
+                                    const IconComponent = getFacilityIcon(tag.icon, 'CheckCircle');
                                     return (
                                         <div key={index} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 text-slate-700 text-xs font-bold hover:border-blue-500 hover:bg-blue-50 transition cursor-default">
                                             <IconComponent size={14} className="text-blue-500" />
@@ -251,7 +270,7 @@ export default async function VillaDetailPage({ params }: { params: Promise<{ sl
                         {/* LEFT: Description (66%) */}
                         <div className="md:col-span-2 space-y-6">
                             <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                                <LucideIcons.Info size={24} className="text-blue-600" />
+                                <Info size={24} className="text-blue-600" />
                                 เกี่ยวกับที่พัก
                             </h3>
                             <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed text-base">

@@ -10,9 +10,9 @@ export const Navbar = () => {
 
                 {/* 1. LOGO */}
                 <Link href="/" className="shrink-0">
-                    <h1 className="text-xl font-black tracking-tight text-blue-600 cursor-pointer">
+                    <span className="text-xl font-black tracking-tight text-blue-600 cursor-pointer">
                         PoolVillaFinder
-                    </h1>
+                    </span>
                 </Link>
 
                 {/* 2. 🚀 SEARCH BAR (Desktop & Tablet) */}
@@ -33,6 +33,16 @@ export const Navbar = () => {
                         <button type="submit" className="hidden">Search</button>
                     </form>
                 </div>
+
+                {/* 2.5 NAV LINKS (Desktop) */}
+                <nav className="hidden md:flex items-center gap-6">
+                    <Link href="/scoop" className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">
+                        บทความ
+                    </Link>
+                    <Link href="/search" className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">
+                        ค้นหาวิลล่า
+                    </Link>
+                </nav>
 
                 {/* 3. SEARCH BUTTON (Mobile เท่านั้น) */}
                 <div className="sm:hidden flex items-center">

@@ -5,8 +5,23 @@ import './globals.css';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'PoolVillaFinder | ค้นหาพูลวิลล่าที่ดีที่สุดทั่วไทย',
+    metadataBase: new URL('https://poolvillafinder.com'),
+    title: {
+        default: 'PoolVillaFinder | ค้นหาพูลวิลล่าที่ดีที่สุดทั่วไทย',
+        template: '%s | PoolVillaFinder',
+    },
     description: 'จองพูลวิลล่าราคาถูก พัทยา หัวหิน เชียงใหม่ ภูเก็ต พร้อมบทความแนะนำที่เที่ยว',
+    openGraph: {
+        type: 'website',
+        locale: 'th_TH',
+        siteName: 'PoolVillaFinder',
+    },
+    twitter: {
+        card: 'summary_large_image',
+    },
+    alternates: {
+        canonical: '/',
+    },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

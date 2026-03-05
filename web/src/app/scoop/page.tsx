@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 import { BookOpen, Calendar, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 
+export const revalidate = 3600;
+
 export const metadata = {
     title: 'บทความและที่เที่ยวพูลวิลล่า | Pool Villa Finder',
     description: 'รวมบทความแนะนำที่พัก ที่เที่ยว และไกด์การจองพูลวิลล่าทั่วไทย',

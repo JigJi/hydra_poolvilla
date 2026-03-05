@@ -42,10 +42,12 @@ const Footer = () => {
                     <div>
                         <h3 className="font-bold text-slate-900 mb-6">ปลายทางยอดนิยม</h3>
                         <ul className="space-y-4">
-                            <li><Link href="/search?province=pattaya" className="text-slate-500 hover:text-blue-600 text-sm transition-colors">พูลวิลล่าพัทยา</Link></li>
-                            <li><Link href="/search?province=hua-hin" className="text-slate-500 hover:text-blue-600 text-sm transition-colors">พูลวิลล่าหัวหิน</Link></li>
-                            <li><Link href="/search?province=chiang-mai" className="text-slate-500 hover:text-blue-600 text-sm transition-colors">พูลวิลล่าเชียงใหม่</Link></li>
-                            <li><Link href="/search?province=phuket" className="text-slate-500 hover:text-blue-600 text-sm transition-colors">พูลวิลล่าภูเก็ต</Link></li>
+                            <li><Link href="/scoop/top-pool-villas-pattaya-2026" className="text-slate-500 hover:text-blue-600 text-sm transition-colors">พูลวิลล่าพัทยา</Link></li>
+                            <li><Link href="/scoop/top-pool-villas-hua-hin-2026" className="text-slate-500 hover:text-blue-600 text-sm transition-colors">พูลวิลล่าหัวหิน</Link></li>
+                            <li><Link href="/scoop/top-pool-villas-mueang-chiang-mai-2026" className="text-slate-500 hover:text-blue-600 text-sm transition-colors">พูลวิลล่าเชียงใหม่</Link></li>
+                            <li><Link href="/scoop/top-pool-villas-mueang-phuket-2026" className="text-slate-500 hover:text-blue-600 text-sm transition-colors">พูลวิลล่าภูเก็ต</Link></li>
+                            <li><Link href="/scoop/top-pool-villas-ko-samui-2026" className="text-slate-500 hover:text-blue-600 text-sm transition-colors">พูลวิลล่าเกาะสมุย</Link></li>
+                            <li><Link href="/scoop/top-pool-villas-cha-am-2026" className="text-slate-500 hover:text-blue-600 text-sm transition-colors">พูลวิลล่าชะอำ</Link></li>
                         </ul>
                     </div>
 

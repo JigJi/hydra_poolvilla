@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import * as LucideIcons from 'lucide-react';
+import { getFacilityIcon } from '@/lib/facility-icons';
 import RelatedScoops from '@/components/scoop/RelatedScoops';
 
 import {
@@ -23,6 +23,15 @@ import { Metadata } from 'next';
 
 // Revalidate ทุก 1 ชั่วโมง
 export const revalidate = 3600;
+
+// Pre-render scoop pages ตอน build
+export async function generateStaticParams() {
+    const scoops = await prisma.scoop.findMany({
+        where: { status: 'published' },
+        select: { slug: true },
+    });
+    return scoops.map((s) => ({ slug: s.slug }));
+}
 
 // TAG_PRIORITY (คงเดิม)
 const TAG_PRIORITY = [
@@ -144,12 +153,22 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const title = scoop.metaTitle || scoop.title;
     const description = scoop.metaDescription || scoop.description;
 
+    // Scoop เก่า (pool-villas-*) ที่ไม่มี location = noindex เพื่อไม่ให้ Google มองเป็น spam
+    const isOldPattern = slug.startsWith('pool-villas-') && !slug.includes('2026');
+
     return {
         title: title,
         description: description,
+        ...(isOldPattern && {
+            robots: { index: false, follow: true },
+        }),
+        alternates: {
+            canonical: `/scoop/${slug}`,
+        },
         openGraph: {
             title: title,
             description: description || undefined,
+            type: 'article',
             images: scoop.coverImage ? [scoop.coverImage] : [],
         },
     };
@@ -200,9 +219,40 @@ export default async function ScoopMagazinePage({ params }: { params: Promise<{ 
         })),
     } : null;
 
+    const articleJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: scoop.title,
+        description: scoop.description,
+        image: scoop.coverImage || undefined,
+        datePublished: scoop.publishedAt?.toISOString(),
+        dateModified: scoop.updatedAt?.toISOString(),
+        author: {
+            '@type': 'Organization',
+            name: 'PoolVillaFinder',
+        },
+        publisher: {
+            '@type': 'Organization',
+            name: 'PoolVillaFinder',
+            url: 'https://poolvillafinder.com',
+        },
+    };
+
+    const breadcrumbJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://poolvillafinder.com' },
+            { '@type': 'ListItem', position: 2, name: 'Scoop', item: 'https://poolvillafinder.com/scoop' },
+            { '@type': 'ListItem', position: 3, name: scoop.title },
+        ],
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 pb-20 font-sans">
             {/* JSON-LD */}
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
             {jsonLd && (
                 <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
             )}
@@ -359,7 +409,7 @@ export default async function ScoopMagazinePage({ params }: { params: Promise<{ 
                                         <div className="flex flex-wrap gap-x-2 gap-y-2 mb-4 min-h-[40px] content-start">
                                             {displayTags.length > 0 ? (
                                                 displayTags.map((tag: any) => {
-                                                    const IconComponent = (LucideIcons as any)[tag.icon] || LucideIcons.HelpCircle;
+                                                    const IconComponent = getFacilityIcon(tag.icon, 'HelpCircle');
                                                     return (
                                                         <div key={tag.id} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 text-slate-600 border border-slate-100 max-w-[160px] shrink-0">
                                                             <IconComponent size={12} className="shrink-0 opacity-70" />

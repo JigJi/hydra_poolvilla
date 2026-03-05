@@ -155,6 +155,7 @@ model Scoop {
   lastIndexedAt  DateTime?
 
   @@index([slug])
+  @@index([status, publishedAt])
   @@index([countVilla])
   @@index([priority])
 }
