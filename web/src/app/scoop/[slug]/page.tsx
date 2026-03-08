@@ -26,11 +26,15 @@ export const revalidate = 3600;
 
 // Pre-render scoop pages ตอน build
 export async function generateStaticParams() {
-    const scoops = await prisma.scoop.findMany({
-        where: { status: 'published' },
-        select: { slug: true },
-    });
-    return scoops.map((s) => ({ slug: s.slug }));
+    try {
+        const scoops = await prisma.scoop.findMany({
+            where: { status: 'published' },
+            select: { slug: true },
+        });
+        return scoops.map((s) => ({ slug: s.slug }));
+    } catch {
+        return [];
+    }
 }
 
 // TAG_PRIORITY (คงเดิม)

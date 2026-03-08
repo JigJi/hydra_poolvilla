@@ -54,15 +54,19 @@ export const revalidate = 3600;
 
 // (Optional) ถ้า Villa เยอะมาก ให้ Generate เฉพาะ Top 100 ตัวแรก ส่วนที่เหลือให้ Server Render แล้ว Cache ทีหลัง
 export async function generateStaticParams() {
-    const topVillas = await prisma.villa.findMany({
-        take: 200,
-        select: { slug: true },
-        orderBy: { reviewCount: 'desc' },
-    });
+    try {
+        const topVillas = await prisma.villa.findMany({
+            take: 200,
+            select: { slug: true },
+            orderBy: { reviewCount: 'desc' },
+        });
 
-    return topVillas.map((villa) => ({
-        slug: villa.slug,
-    }));
+        return topVillas.map((villa) => ({
+            slug: villa.slug,
+        }));
+    } catch {
+        return [];
+    }
 }
 
 export default async function VillaDetailPage({ params }: { params: Promise<{ slug: string }> }) {
