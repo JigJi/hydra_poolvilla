@@ -10,7 +10,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         prisma.scoop.findMany({
             where: {
                 status: 'published',
-                NOT: { slug: { startsWith: 'pool-villas-' } },
             },
             select: { slug: true, updatedAt: true },
         }),
